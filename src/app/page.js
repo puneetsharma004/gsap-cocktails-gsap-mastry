@@ -10,7 +10,6 @@ export default function Home() {
        <main>
            <NavBar/>
            <Hero/>
-           <div className='h-dvh bg-black' />
        </main>
 
    </>

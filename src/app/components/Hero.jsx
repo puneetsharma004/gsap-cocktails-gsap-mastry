@@ -1,19 +1,23 @@
 'use client'
-import React from 'react';
+import {useMediaQuery} from 'react-responsive'
+import React, {useRef} from 'react';
 import Image from 'next/image'
 import Link from 'next/link'
 import {useGSAP} from "@gsap/react";
 import {SplitText, ScrollTrigger} from 'gsap/all'
 import gsap from 'gsap'
 
-gsap.registerPlugin(ScrollTrigger)
+gsap.registerPlugin(ScrollTrigger, SplitText)
 
 const Hero = () => {
+    const videoRef = useRef()
+    const isMobile = useMediaQuery({maxWidth: 767})
     useGSAP(()=>{
         const heroSplit = new SplitText('.title', { type: 'chars, words'})
         const paraSplit = new SplitText('.subtitle', { type: 'lines'})
 
         heroSplit.chars.forEach((char)=> char.classList.add('text-gradient'))
+
 
         gsap.from(heroSplit.chars,{
             yPercent: 100,
@@ -39,6 +43,32 @@ const Hero = () => {
         })
             .to('.right-leaf', { y:200 }, 0)
             .to('.left-leaf', { y:-200 }, 0)
+
+        const startValue = isMobile ? "top 50%" : "center 60%"
+        const endValue = isMobile ? "120% top" : "bottom top"
+
+        const tl = gsap.timeline({
+            scrollTrigger: {
+                trigger: 'video',
+                start: startValue,
+                end: endValue,
+                scrub: true,
+                pin: true,
+            }
+        })
+
+        // ✅ Fix race condition — check if metadata is already available
+        const setupVideo = () => {
+            tl.to(videoRef.current, {
+                currentTime: videoRef.current.duration,
+            })
+        }
+
+        if (videoRef.current.readyState >= 1) {
+            setupVideo()  // metadata already loaded, run immediately
+        } else {
+            videoRef.current.onloadedmetadata = setupVideo  // wait for it
+        }
     },[])
     return (
         <>
@@ -63,6 +93,17 @@ const Hero = () => {
 
                 </div>
             </section>
+
+            <div className='video absolute inset-0'>
+                <video
+                    ref={videoRef}
+                    src='/videos/output.mp4'
+                    muted
+                    preload='auto'
+                    playsInline
+                />
+
+            </div>
         </>
     );
 };
